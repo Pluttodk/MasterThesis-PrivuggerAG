@@ -10,9 +10,12 @@ def map_int_to_cont_dist(name, info, domain, shape):
     dist = None
     if ids == 0:
         ##Normal
-        dist = pm.Normal(name, mu, std, shape=shape)
+        normal = pm.Bound(pm.Normal, lower=domain["lower"], upper=domain["upper"])
+        dist = normal(name, mu, std, shape=shape)
     elif ids == 1:
         #Uniform
+        # uniform = pm.Bound(pm.Uniform, lower=domain["lower"], upper=domain["upper"])
+
         f_a = lambda b: 2*mu-b
         b = 1/3*(mu+2*np.sqrt(3)*np.sqrt(std))
         a = f_a(b)
@@ -26,11 +29,13 @@ def map_int_to_cont_dist(name, info, domain, shape):
         dist = pm.HalfNormal(name, std, shape=shape)
     elif ids == 3:
         #Gamma
+        uniform = pm.Bound(pm.Uniform, lower=domain["lower"], upper=domain["upper"])
+
         dist = pm.Gamma(name, mu=abs(mu), sigma=std, shape=shape)
     if shape == 1:
         return dist
-    db = np.emtpy(shape+1, dtype=object)
-    db[0] = pm.Uniform("Alice", domain["lower"], domain["upper"])
+    db = np.empty(shape+1, dtype=object)
+    db[0] = pm.Uniform(f"Alice_{name}", domain["lower"], domain["upper"], shape=1)
     for i in range(shape):
         db[i+1] = dist[i]
     return db
@@ -52,8 +57,8 @@ def map_int_to_discrete_dist(name, info, domain, shape):
         dist = pm.Poisson(name, mu=mu, shape=shape)
     if shape == 1:
         return dist
-    db = np.emtpy(shape+1, dtype=object)
-    db[0] = pm.Uniform("Alice", domain["lower"], domain["upper"])
+    db = np.empty(shape+1, dtype=object)
+    db[0] = pm.Uniform(f"Alice_{name}", domain["lower"], domain["upper"], shape=1)
     for i in range(shape):
         db[i+1] = dist[i]
     return db

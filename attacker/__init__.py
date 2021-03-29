@@ -1,13 +1,12 @@
 import pymc3 as pm
-import parse
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from GPyOpt.methods import BayesianOptimization
-import optimizer as opt
-from sklearn.feature_selection import mutual_info_regression
 from typing import *
-
+from attacker import parameters, parse, optimizer as opt
+import logging
+import time
 
 
 def fix_domain(domain):
@@ -52,50 +51,66 @@ def domain_to_dist(d):
         })
     return resulting_domain
 
+def progress_bar(f, max_iter, current, width=20):
+    s = "#"*int((current/max_iter)*width)
+    rest = "-"*int(((max_iter-current)/max_iter)*width)
+
+    start = time.time()
+    res = f()
+    end = time.time()
+
+    time_taken = end-start
+    projected_finish = time_taken*(max_iter-current)
+    hours, rem = divmod(projected_finish, 60*60)
+    minutes, rem = divmod(rem, 60)
+    seconds = round(rem)
+    
+    times = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), seconds)
+    print(f"\r [{s}{rest}] - {current}/{max_iter} - Time left: {times} ", end="\r")
+    
+    return res
+
 def construct_analysis(f, domain, q):
+    logger = logging.getLogger('pymc3')
+    logger.setLevel(logging.ERROR)
+    logger.propagate = False
+
+    logger.disabled = True
     method = parse.create_analytical_method(f, q, domain)
-    f_new = lambda x: method(x)
+
+    parameters.PROGRESS = 0
+    def f_new(x):
+        parameters.PROGRESS += 1
+        return progress_bar(lambda:method(x), parameters.MAX_ITER+parameters.INITIAL_DESIGN_NUMDATA, parameters.PROGRESS)
+
     domain = domain_to_dist(domain)
     Bopt = BayesianOptimization(f=f_new, domain=domain, 
                          acquisition_type='EI',        # Expected Improvement
+                         initial_design_numdata=parameters.INITIAL_DESIGN_NUMDATA,
                          exact_feval = True)
-    Bopt.run_optimization(max_iter = 50, eps=1e-8)           # True evaluations, no sample noise)
+    Bopt.run_optimization(max_iter = parameters.MAX_ITER, eps=1e-8)           # True evaluations, no sample noise)
     print("="*20)
     print("Value of (x,y) that minimises the objective:"+str(Bopt.x_opt))    
     print("Minimum value of the objective: "+str(Bopt.fx_opt))     
     print("="*20)
-    return Bopt
+    
+    logger.disabled = False
+    return wrapper(Bopt, method)
 
-def f(x : Tuple[List[float], List[int]]) -> float:
-    x = x[0]
-    print(x, "Within F")
-    return sum(x)/len(x)
 
-def q_mutual_info(alice, out):
-    I = mutual_info_regression(alice[:,0].reshape(-1,1), out[:,0])[0]
-    return -I
+class wrapper:
+    def __init__(self, Bopt, f):
+        self.f = f
+        self.Bopt = Bopt
+    
+    def plot_convergence(self):
+        self.Bopt.plot_convergence()
+    
+    def plot_acquisition(self):
+        self.Bopt.plot_acquisition()
 
-domain = [
-    {
-        "name": "age", 
-        "lower": 0, 
-        "upper": 100,
-        "type": "float"
-    },
-    {
-        "name": "height", 
-        "lower": 100, 
-        "upper": 150,
-        "type": "int"
-    },    
-    {
-        "name": "age", 
-        "lower": 0, 
-        "upper": 100,
-        "type": "float"
-    },
-]
-# domain_to_dist(domain)
-construct_analysis(f, domain, q_mutual_info)
-# run_opt(analys, domain).plot_convergence()
-# plt.show()
+    def maximum(self):
+        return self.Bopt.x_opt
+    
+    def run(self, return_trace=False):
+        return self.f(np.asarray([self.Bopt.x_opt]), return_trace)
