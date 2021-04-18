@@ -1,0 +1,151 @@
+Collecting package metadata (current_repodata.json): ...working... done
+Solving environment: ...working... done
+
+## Package Plan ##
+
+  environment location: C:\Users\Mathias\.conda\envs\thesis
+
+  added / updated specs:
+    - pymc3
+
+
+The following packages will be downloaded:
+
+    package                    |            build
+    ---------------------------|-----------------
+    cachetools-4.2.1           |     pyhd8ed1ab_0          13 KB  conda-forge
+    dill-0.3.3                 |     pyhd8ed1ab_0          60 KB  conda-forge
+    fastprogress-1.0.0         |             py_0          15 KB  conda-forge
+    filelock-3.0.12            |     pyh9f0ad1d_0          10 KB  conda-forge
+    pymc3-3.11.2               |     pyhd8ed1ab_0         616 KB  conda-forge
+    semver-2.13.0              |     pyh9f0ad1d_0          15 KB  conda-forge
+    theano-pymc-1.1.2          |   py38h885f38d_0         2.2 MB  conda-forge
+    typing-extensions-3.7.4.3  |                0           8 KB  conda-forge
+    typing_extensions-3.7.4.3  |             py_0          25 KB  conda-forge
+    vs2017_win-64-19.16.27038  |       h2e3bad8_2           7 KB  conda-forge
+    vswhere-2.8.4              |       h57928b3_0         236 KB  conda-forge
+    ------------------------------------------------------------
+                                           Total:         3.2 MB
+
+The following NEW packages will be INSTALLED:
+
+  cachetools         conda-forge/noarch::cachetools-4.2.1-pyhd8ed1ab_0
+  dill               conda-forge/noarch::dill-0.3.3-pyhd8ed1ab_0
+  fastprogress       conda-forge/noarch::fastprogress-1.0.0-py_0
+  filelock           conda-forge/noarch::filelock-3.0.12-pyh9f0ad1d_0
+  semver             conda-forge/noarch::semver-2.13.0-pyh9f0ad1d_0
+  theano-pymc        conda-forge/win-64::theano-pymc-1.1.2-py38h885f38d_0
+  typing-extensions  conda-forge/noarch::typing-extensions-3.7.4.3-0
+  typing_extensions  conda-forge/noarch::typing_extensions-3.7.4.3-py_0
+  vs2017_win-64      conda-forge/win-64::vs2017_win-64-19.16.27038-h2e3bad8_2
+  vswhere            conda-forge/win-64::vswhere-2.8.4-h57928b3_0
+
+The following packages will be UPDATED:
+
+  pymc3                           pkgs/main::pymc3-3.8-py_0 --> conda-forge::pymc3-3.11.2-pyhd8ed1ab_0
+
+
+Proceed ([y]/n)? 
+
+Downloading and Extracting Packages
+dill-0.3.3           | 60 KB     |            |   0% dill-0.3.3           | 60 KB     | ##6        |  27% dill-0.3.3           | 60 KB     | ########## | 100% 
+semver-2.13.0        | 15 KB     |            |   0% semver-2.13.0        | 15 KB     | ########## | 100% 
+pymc3-3.11.2         | 616 KB    |            |   0% pymc3-3.11.2         | 616 KB    | ########## | 100% pymc3-3.11.2         | 616 KB    | ########## | 100% 
+cachetools-4.2.1     | 13 KB     |            |   0% cachetools-4.2.1     | 13 KB     | ########## | 100% 
+typing-extensions-3. | 8 KB      |            |   0% typing-extensions-3. | 8 KB      | ########## | 100% 
+filelock-3.0.12      | 10 KB     |            |   0% filelock-3.0.12      | 10 KB     | ########## | 100% 
+typing_extensions-3. | 25 KB     |            |   0% typing_extensions-3. | 25 KB     | ########## | 100% 
+theano-pymc-1.1.2    | 2.2 MB    |            |   0% theano-pymc-1.1.2    | 2.2 MB    |            |   1% theano-pymc-1.1.2    | 2.2 MB    | ########## | 100% theano-pymc-1.1.2    | 2.2 MB    | ########## | 100% 
+vswhere-2.8.4        | 236 KB    |            |   0% vswhere-2.8.4        | 236 KB    | ########## | 100% 
+vs2017_win-64-19.16. | 7 KB      |            |   0% vs2017_win-64-19.16. | 7 KB      | ########## | 100% 
+fastprogress-1.0.0   | 15 KB     |            |   0% fastprogress-1.0.0   | 15 KB     | ########## | 100% 
+Preparing transaction: ...working... done
+Verifying transaction: ...working... done
+Executing transaction: ...working... done
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>SET DISTUTILS_USE_SDK=1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>SET MSSdk=1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>SET "VS_VERSION=15.0" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>SET "VS_MAJOR=15" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>SET "VS_YEAR=2017" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>set "MSYS2_ARG_CONV_EXCL=/AI;/AL;/OUT;/out" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>set "MSYS2_ENV_CONV_EXCL=CL" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>set "PY_VCRUNTIME_REDIST=\bin\vcruntime140.dll" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>set "CXX=cl.exe" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>set "CC=cl.exe" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>set "VSINSTALLDIR=" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>for /F "usebackq tokens=*" %i in (`vswhere.exe -nologo -products * -version [15.0,16.0) -property installationPath`) do (set "VSINSTALLDIR=%i\" ) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if not exist "" (for /F "usebackq tokens=*" %i in (`vswhere.exe -nologo -products * -requires Microsoft.VisualStudio.Component.VC.v141.x86.x64 -property installationPath`) do (set "VSINSTALLDIR=%i\" ) ) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if not exist "" (set "VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\" ) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if not exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\" (set "VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\" ) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if not exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\" (set "VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\" ) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if not exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\" (set "VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\" ) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>IF NOT "" == "" (
+set "INCLUDE=;"  
+ set "LIB=;"  
+ set "CMAKE_PREFIX_PATH=;" 
+) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>call :GetWin10SdkDir 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>call :GetWin10SdkDirHelper HKLM\SOFTWARE\Wow6432Node  1>nul 2>&1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 call :GetWin10SdkDirHelper HKCU\SOFTWARE\Wow6432Node  1>nul 2>&1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 call :GetWin10SdkDirHelper HKLM\SOFTWARE  1>nul 2>&1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 call :GetWin10SdkDirHelper HKCU\SOFTWARE  1>nul 2>&1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 exit /B 1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>exit /B 0 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>for /F %i in ('dir /ON /B "\include\10.*"') DO (SET WindowsSDKVer=%~i ) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 (echo "Didn't find any windows 10 SDK. I'm not sure if things will work, but let's try..." )  else (echo Windows SDK version found as: "" ) 
+Windows SDK version found as: ""
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>IF "win-64" == "win-64" (
+set "CMAKE_GEN=Visual Studio 15 2017 Win64"  
+ set "BITS=64" 
+)  else (
+set "CMAKE_GEN=Visual Studio 15 2017"  
+ set "BITS=32" 
+) 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>pushd C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\ 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>CALL "VC\Auxiliary\Build\vcvars64.bat" -vcvars_ver=14.16  
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>popd
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>IF "" == "" SET "CMAKE_GENERATOR=Visual Studio 15 2017 Win64" 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>call :GetWin10SdkDirHelper HKLM\SOFTWARE\Wow6432Node  1>nul 2>&1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 call :GetWin10SdkDirHelper HKCU\SOFTWARE\Wow6432Node  1>nul 2>&1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 call :GetWin10SdkDirHelper HKLM\SOFTWARE  1>nul 2>&1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 call :GetWin10SdkDirHelper HKCU\SOFTWARE  1>nul 2>&1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>if errorlevel 1 exit /B 1 
+
+CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK CLINK C:\Users\Mathias\Documents\dev\Thesis_code>exit /B 0 

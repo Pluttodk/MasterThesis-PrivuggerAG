@@ -8,7 +8,7 @@ def q_mutual_info(trace):
 domain = [
     {
         "name": "age", 
-        "lower": 0, 
+        "lower": 10, 
         "upper": 100,
         "type": "float"
     },

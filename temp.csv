@@ -1,12 +1,11 @@
 ,age,sex,educ,race,income,married
-0,Alice_age ~ Uniform,Alice_sex ~ Uniform,Alice_educ ~ Uniform,Alice_race ~ Uniform,Alice_income ~ Uniform,Alice_married ~ Uniform
-1,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-2,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-3,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-4,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-5,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-6,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-7,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-8,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-9,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
-10,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0,Subtensor{int64}.0
+0,2,2,7,10,-5.857773731289053,1
+1,6,7,10,7,14.820197786752862,5
+2,2,5,7,2,0.76377229039712,4
+3,6,4,10,6,-13.96500649507015,8
+4,3,3,9,5,15.268468767533879,9
+5,4,5,2,5,-4.211496381665762,5
+6,5,10,7,10,26.748405149764697,2
+7,1,1,10,3,-5.311130722427001,0
+8,2,2,3,3,-12.02673275510167,5
+9,10,2,9,9,-2.974914271830955,5

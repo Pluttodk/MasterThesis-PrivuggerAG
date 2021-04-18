@@ -57,13 +57,23 @@ def create_analytical_method(f, q, domain):
         if isinstance(methods[0], list):
             def inner(x, return_trace=False):
                 np.random.seed(12345)
-                with pm.Model() as model:
-                    items = eval_methods(methods[0], 0, x, domain)
-                    out = pm.Deterministic("out", f(items))
-                    trace = pm.sample(parameters.SAMPLES, progressbar = 0, return_inferencedata=False, cores=2)
-                    if return_trace:
-                        return q(trace), trace
-                    return q(trace)
+                items = eval_methods(methods[0], 0, x, domain)
+                dist = [di(parameters.SAMPLES) for di in items]
+                dist_reshape = np.asarray(list(zip(*dist)))
+                out = np.asarray([f(db) for db in dist_reshape])
+                trace = {
+                    f"Alice_{domain[0]['name']}": dist[0],
+                    f"Rest_{domain[0]['name']}": dist[1:],
+                    "out": out
+                }
+                return q(trace)
+                # with pm.Model() as model:
+                #     items = eval_methods(methods[0], 0, x, domain)
+                #     out = pm.Deterministic("out", f(items))
+                #     trace = pm.sample(parameters.SAMPLES, progressbar = 0, return_inferencedata=False, cores=2)
+                #     if return_trace:
+                #         return q(trace), trace
+                #     return q(trace)
             return inner
         else:
             def inner(x, return_trace=False):
