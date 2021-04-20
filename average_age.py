@@ -4,6 +4,8 @@ import opendp.smartnoise.core as sn
 from sklearn.feature_selection import mutual_info_regression
 from typing import List
 from scipy import stats as st
+from matplotlib import pyplot as plt
+import parameters
 
 def wrapper(a: List[float]) -> float:
     return sum(a)/len(a)
@@ -14,12 +16,10 @@ domain = [
         "name": "age",
         "lower": 10,
         "upper": 100,
-        "type": "float"
+        "type": "float",
+        "alice": st.norm(0,10)
     }
 ]
-
-def diff(trace):
-    return np.sum(trace["Rest_age"])
 
 def q(trace):
     I = mutual_info_regression(trace["Alice_age"].reshape(-1,1), trace["out"], random_state=np.random.RandomState(12345))[0]
@@ -27,11 +27,8 @@ def q(trace):
 
 #Maximum is = 4.605
 
-attacker.construct_analysis(wrapper, 
-                            domain, 
-                            diff,
-                            random_state=1)
-# print("="*20)
-# print(f"Maximum y reached after 100-iterations: {Y_step[np.argmin(Y_step)]}")
-# print(f"Maximum x reached after 100-iterations: {X_step[np.argmin(Y_step)]}")
-# print("="*20)
+x = [4.605] * 10
+fig, ax = plt.subplot((2,2))
+res = attacker.construct_analysis(wrapper, 
+                                  domain, 
+                                  q)

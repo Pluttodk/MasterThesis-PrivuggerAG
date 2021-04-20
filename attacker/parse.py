@@ -3,32 +3,32 @@ import pymc3 as pm
 import numpy as np
 from attacker import parameters, optimizer as opt
 
-def convert_primitive_to_dist(p, i, is_list):
+def convert_primitive_to_dist(p, i, is_list, rng=None):
     if p == float:
         def float_convert(x, domain):
             size = parameters.DB_SIZE if is_list else 1
-            return opt.map_int_to_cont_dist(domain[i]["name"], x, domain[i], shape=size)
+            return opt.map_int_to_cont_dist(domain[i]["name"], x, domain[i], shape=size, rng=rng)
         return float_convert
     elif p == int:
         def int_convert(x, domain):
             size = parameters.DB_SIZE if is_list else 1
-            return opt.map_int_to_cont_dist(domain[i]["name"], x, domain[i], shape=size)
+            return opt.map_int_to_discrete_dist(domain[i]["name"], x, domain[i], shape=size)
         return int_convert
 
-def convert_non_primitive_to_dist(p,i):
+def convert_non_primitive_to_dist(p,i, rng=None):
     inner = p.__args__
     partial = []
     for pi in inner:
         if pi == int or pi == float:
             is_list = p.__origin__ == List or p.__origin__ == list
-            partial.append(convert_primitive_to_dist(pi, i, is_list))
+            partial.append(convert_primitive_to_dist(pi, i, is_list, rng=rng))
             i+=1
         else:
-            temp, i = convert_non_primitive_to_dist(pi, i)
+            temp, i = convert_non_primitive_to_dist(pi, i, rng=rng)
             partial.append(temp)
     return partial, i
 
-def parse(f):
+def parse(f,rng=None):
     """
     For each parameter - p:
         For each type of p:
@@ -43,20 +43,23 @@ def parse(f):
     i = 0
     for p in parameters[:-1]:
         if p == float or p == int:
-            methods.append(convert_primitive_to_dist(p, i, False))
+            methods.append(convert_primitive_to_dist(p, i, False, rng=rng))
         else:
             # Under this assumption we now have a list or tuple
-            temp, i = convert_non_primitive_to_dist(p,i)
+            temp, i = convert_non_primitive_to_dist(p,i,rng=rng)
             methods.append(temp)
     return methods
 
 
-def create_analytical_method(f, q, domain):
-    methods = parse(f)
+def create_analytical_method(f, q, domain, random_state=None):
+    if isinstance(random_state, int):
+        methods = parse(f,random_state)
+    else:
+        methods = parse(f)
     if len(list(f.__annotations__.values())) == 2:
         if isinstance(methods[0], list):
-            def inner(x, return_trace=False):
-                np.random.seed(12345)
+            def inner(x, i, return_trace=False):
+                x = np.append(np.asarray([[i]]), x).reshape((1,-1))
                 items = eval_methods(methods[0], 0, x, domain)
                 dist = [di(parameters.SAMPLES) for di in items]
                 dist_reshape = np.asarray(list(zip(*dist)))
@@ -76,7 +79,8 @@ def create_analytical_method(f, q, domain):
                 #     return q(trace)
             return inner
         else:
-            def inner(x, return_trace=False):
+            def inner(x, i, return_trace=False):
+                x = np.append(np.asarray([[i]]), x).reshape((1,-1))
                 np.random.seed(12345)
                 with pm.Model() as model:
                     res = methods[0](x[0])
@@ -88,7 +92,8 @@ def create_analytical_method(f, q, domain):
             return inner
     else:
         # We will have to do a larger test, such that every parameter becomes a 
-        def inner(x, return_trace=False):
+        def inner(x, i, return_trace=False):
+            x = np.append(np.asarray([[i]]), x).reshape((1,-1))
             np.random.seed(12345)
             with pm.Model() as model:
                 objects = len(np.asarray(methods).flatten())
