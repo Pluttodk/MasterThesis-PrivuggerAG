@@ -2,6 +2,7 @@ from typing import *
 import pymc3 as pm
 import numpy as np
 from attacker import parameters, optimizer as opt
+from numba import njit
 
 def convert_primitive_to_dist(p, i, is_list, rng=None):
     if p == float:
@@ -50,6 +51,20 @@ def parse(f,rng=None):
             methods.append(temp)
     return methods
 
+@njit
+def make_output(f, dist):
+    db = np.zeros(len(dist))
+    for i,d in enumerate(dist):
+        db[i] = f(d)
+    return db
+
+@njit
+def unwrap_fast(X):
+    db = np.empty((len(X[0]), len(X)))
+    for i in range(len(X[0])):
+        for j in range(len(X)):
+            db[i,j] = X[j][i]
+    return db
 
 def create_analytical_method(f, q, domain, random_state=None):
     if isinstance(random_state, int):
@@ -58,25 +73,20 @@ def create_analytical_method(f, q, domain, random_state=None):
         methods = parse(f)
     if len(list(f.__annotations__.values())) == 2:
         if isinstance(methods[0], list):
+
             def inner(x, i, return_trace=False):
                 x = np.append(np.asarray([[i]]), x).reshape((1,-1))
                 items = eval_methods(methods[0], 0, x, domain)
                 dist = [di(parameters.SAMPLES) for di in items]
-                dist_reshape = np.asarray(list(zip(*dist)))
-                out = np.asarray([f(db) for db in dist_reshape])
+                dist_reshape = unwrap_fast(dist)
+
+                out = make_output(f, dist_reshape)
                 trace = {
                     f"Alice_{domain[0]['name']}": dist[0],
                     f"Rest_{domain[0]['name']}": dist[1:],
                     "out": out
                 }
                 return q(trace)
-                # with pm.Model() as model:
-                #     items = eval_methods(methods[0], 0, x, domain)
-                #     out = pm.Deterministic("out", f(items))
-                #     trace = pm.sample(parameters.SAMPLES, progressbar = 0, return_inferencedata=False, cores=2)
-                #     if return_trace:
-                #         return q(trace), trace
-                #     return q(trace)
             return inner
         else:
             def inner(x, i, return_trace=False):
