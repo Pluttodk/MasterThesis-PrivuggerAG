@@ -11,6 +11,7 @@ from tqdm import tqdm
 from attacker.dist import *
 from cProfile import Profile
 from scipy import stats as st
+from joblib import Parallel, delayed
 
 
 def fix_domain(domain):
@@ -49,20 +50,20 @@ def domain_to_dist_ids(d, ids):
             constraints.append(c)
     return resulting_domain, constraints
 
-def construct_analysis(f, domain, q, random_state=None):
+def construct_analysis(f, domain, q, random_state=None, cores=1):
     method = parse.create_analytical_method(f, q, domain, random_state)
 
     comb = np.array([np.arange(parameters.CONT_DIST) if d["type"] == "float" else np.arange(parameters.DISC_DIST) for d in domain])
 
     combs = np.array(np.meshgrid(*comb)).T.reshape(-1, len(comb))
 
-    X, Y, fs = [],[], []
-    for dist in tqdm(combs):
+    # X, Y, fs = [],[], []
+    def run_analysis(dist):
         cur_dist, constraint = domain_to_dist_ids(domain, dist)
         feasible_region = GPyOpt.Design_space(space = cur_dist, constraints = constraint) 
         initial_design = GPyOpt.experiment_design.initial_design('random', feasible_region, 10)
         f = lambda x: method(x,dist)
-        fs.append(f)
+        # fs.append(f)
         #CHOOSE the objective
         objective = GPyOpt.core.task.SingleObjective(f)
 
@@ -81,9 +82,36 @@ def construct_analysis(f, domain, q, random_state=None):
 
         bo.run_optimization(max_iter = parameters.MAX_ITER, eps = parameters.EPS, verbosity=False) 
 
-        X.append(bo.X)
-        Y.append(bo.Y)
-    w = wrapper(X,Y, domain)
+        return bo.X, bo.Y
+    res = Parallel(n_jobs=cores)(delayed(run_analysis)(dist) for dist in tqdm(combs))
+    # for dist in tqdm(combs):
+    #     cur_dist, constraint = domain_to_dist_ids(domain, dist)
+    #     feasible_region = GPyOpt.Design_space(space = cur_dist, constraints = constraint) 
+    #     initial_design = GPyOpt.experiment_design.initial_design('random', feasible_region, 10)
+    #     f = lambda x: method(x,dist)
+    #     fs.append(f)
+    #     #CHOOSE the objective
+    #     objective = GPyOpt.core.task.SingleObjective(f)
+
+    #     # CHOOSE the model type
+    #     model = GPyOpt.models.GPModel(exact_feval=True,optimize_restarts=10,verbose=False)
+
+    #     #CHOOSE the acquisition optimizer
+    #     aquisition_optimizer = GPyOpt.optimization.AcquisitionOptimizer(feasible_region)
+
+    #     #CHOOSE the type of acquisition
+    #     acquisition = GPyOpt.acquisitions.AcquisitionEI(model, feasible_region, optimizer=aquisition_optimizer)
+
+    #     #CHOOSE a collection method
+    #     evaluator = GPyOpt.core.evaluators.Sequential(acquisition)
+    #     bo = GPyOpt.methods.ModularBayesianOptimization(model, feasible_region, objective, acquisition, evaluator, initial_design)
+
+    #     bo.run_optimization(max_iter = parameters.MAX_ITER, eps = parameters.EPS, verbosity=False) 
+
+    #     X.append(bo.X)
+    #     Y.append(bo.Y)
+    X = [r[0] for r in res]
+    Y = [r[1] for r in res]
     return X,Y
 
 

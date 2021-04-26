@@ -38,7 +38,8 @@ def q(trace):
 X, Y = attacker.construct_analysis(wrapper, 
                             domain, 
                             q,
-                            random_state=1)
+                            random_state=1,
+                            cores=2)
 for i in range(len(X)):
     print("="*9+str(i)+"="*9)
     print(f"Maximum y reached after 100-iterations: {Y[i][np.argmin(Y[i])]}")
