@@ -6,37 +6,40 @@ from typing import List
 from scipy import stats as st
 from numba import njit
 
-@njit
-def wrapper(a: List[int]) -> float:
-    return np.mean(a)
-## opendp program
+def wrapper(a: List[float], b: List[float]) -> float:
+    res = np.mean(a[b > 180])
+    if np.isnan(res):
+        return 0
+    return res
+
+
 
 domain = [
     {
         "name": "age",
         "lower": 10,
-        "upper": 100,
-        "type": "int"
+        "upper": 80,
+        "type": "float"
+    },
+    {
+        "name": "height",
+        "lower": 150,
+        "upper": 200,
+        "type": "float"
     }
 ]
 
-def sums(l):
-    return np.sum(l)
-
-def diff(trace):
-    return sums(np.asarray(trace["Rest_age"]))
-
 def q(trace):
-    I = mutual_info_regression(trace["Alice_age"].reshape(-1,1), trace["out"], random_state=np.random.RandomState(12345))[0]
+    I = mutual_info_regression(trace["Alice_age"].reshape(-1,1), trace["out"], random_state=np.random.RandomState(1))[0]
     return -I
 
-#Maximum is = 4.605
+# Assumption is that dist for parameter 0 has to be low, and parameter for height below 180
 
 X, Y = attacker.construct_analysis(wrapper, 
                             domain, 
-                            diff,
+                            q,
                             random_state=1)
-for i in range(2):
+for i in range(len(X)):
     print("="*9+str(i)+"="*9)
     print(f"Maximum y reached after 100-iterations: {Y[i][np.argmin(Y[i])]}")
     print(f"Maximum x reached after 100-iterations: {X[i][np.argmin(Y[i])]}")

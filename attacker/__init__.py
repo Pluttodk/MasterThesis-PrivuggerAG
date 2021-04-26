@@ -10,6 +10,7 @@ import time
 from tqdm import tqdm
 from attacker.dist import *
 from cProfile import Profile
+from scipy import stats as st
 
 
 def fix_domain(domain):
@@ -26,45 +27,19 @@ def fix_domain(domain):
             raise TypeError(f"Wrong variable for domain with key {k}, expected ..., recieved {domain[k]}")
     return domain
 
-def domain_to_dist(d):
-    res = [fix_domain(domain) for domain in d]
-    resulting_domain = []
-    for domain in d:
-        # Append a map to int
-        number_of_dist = parameters.CONT_DIST if domain["type"] == "float" else parameters.DISC_DIST
-        resulting_domain.append({
-            "name": domain["name"]+"_dist",
-            "type": "discrete",
-            "domain": tuple(range(number_of_dist))
-        })
-
-        #Append value equal to mu
-        resulting_domain.append({
-            "name": domain["name"]+"_mu",
-            "type": "continuous" if domain["type"] == "float" else "discrete",
-            "domain": (domain["lower"], domain["upper"]) if  domain["type"] == "float" else tuple(range(int(domain["lower"]), int(domain["upper"]))),
-        })
-        #Append value equal to sigma
-        #takin in to account that standard deviation are always floats
-        upper_bound_std = (1/12)*(domain["upper"] - domain["lower"])**2
-        resulting_domain.append({
-            "name": domain["name"]+"_std",
-            "type": "continuous",
-            "domain": (0.1, upper_bound_std),
-        })
-    return resulting_domain
-
-
 def domain_to_dist_ids(d, ids):
     res = [fix_domain(domain) for domain in d]
     resulting_domain = []
     constraints = []
     pos = 0
-    for domain in d:
-        if ids == 0:
-            dom, cons = normal_domain(domain)
+    for i, domain in zip(ids,d):
+        if i == 0:
+            if domain["type"] == "float":
+                dom, cons = normal_domain(domain)
+            else:
+                dom, cons = poisson_domain(domain, pos)
             pos += 2
-        elif ids == 1:
+        elif i == 1:
             dom, cons = uniform_domain(domain, pos)
             pos += 2
 
@@ -74,37 +49,20 @@ def domain_to_dist_ids(d, ids):
             constraints.append(c)
     return resulting_domain, constraints
 
-def progress_bar(f, max_iter, current, width=20):
-    s = "#"*int((current/max_iter)*width)
-    rest = "-"*int(((max_iter-current)/max_iter)*width)
-
-    start = time.time()
-    res = f()
-    end = time.time()
-
-    time_taken = end-start
-    projected_finish = time_taken*(max_iter-current)
-    hours, rem = divmod(projected_finish, 60*60)
-    minutes, rem = divmod(rem, 60)
-    seconds = round(rem)
-    
-    times = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), seconds)
-    print(f"\r [{s}{rest}] - {current}/{max_iter} - Time left: {times} ", end="\r")
-    
-    return res
-
 def construct_analysis(f, domain, q, random_state=None):
     method = parse.create_analytical_method(f, q, domain, random_state)
 
-    X, Y = [],[]
-    for dist in tqdm(range(parameters.CONT_DIST)):
-        cur_dist, constraint = domain_to_dist_ids(domain, dist)
+    comb = np.array([np.arange(parameters.CONT_DIST) if d["type"] == "float" else np.arange(parameters.DISC_DIST) for d in domain])
 
+    combs = np.array(np.meshgrid(*comb)).T.reshape(-1, len(comb))
+
+    X, Y, fs = [],[], []
+    for dist in tqdm(combs):
+        cur_dist, constraint = domain_to_dist_ids(domain, dist)
         feasible_region = GPyOpt.Design_space(space = cur_dist, constraints = constraint) 
         initial_design = GPyOpt.experiment_design.initial_design('random', feasible_region, 10)
-
         f = lambda x: method(x,dist)
-
+        fs.append(f)
         #CHOOSE the objective
         objective = GPyOpt.core.task.SingleObjective(f)
 
@@ -125,15 +83,26 @@ def construct_analysis(f, domain, q, random_state=None):
 
         X.append(bo.X)
         Y.append(bo.Y)
+    w = wrapper(X,Y, domain)
     return X,Y
 
 
 
 class wrapper:
-    def __init__(self, Bopt, f):
-        self.f = f
-        self.Bopt = Bopt
+    def __init__(self, X,Y, domain):
+        self.X = X
+        self.Y = Y
+        self.domain = domain
     
+    def plot_best_dist(self):
+        fig, ax = plt.subplots(len(self.domain),2)
+        for a, d in zip(ax, domain):
+            if d["type"] == "int":
+                x = np.arange(d["lower"], d["upper"])
+                # mu,scale = 
+                # a[0].plot(poisson)
+                #a[1].plot(Uniform)
+
     def plot_convergence(self, plot=True):
         self.Bopt.plot_convergence()
         if not plot:

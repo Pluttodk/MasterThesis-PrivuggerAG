@@ -22,14 +22,13 @@ def map_int_to_cont_dist(name, info, domain, shape,rng=None):
         dist = [lambda siz: sc.stats.halfnorm(mu, std).rvs(siz,random_state=rng) for _ in range(shape)]
 
     #     dist = pm.Gamma(name, mu=abs(mu), sigma=std, shape=shape)
-    # if shape == 1:
-    #     return dist
+    if shape == 1:
+        return dist
     db = np.empty(shape+1, dtype=object)
     if "alice" in domain and isinstance(domain["alice"], sc.stats._distn_infrastructure.rv_frozen):
         db[0] = lambda siz: domain["alice"].rvs(siz)
     else:
         db[0] = lambda siz: sc.stats.uniform(domain["lower"], domain["upper"]-domain["lower"]).rvs(siz, random_state=rng)
-    # db[0] = pm.Uniform(f"Alice_{name}", domain["lower"], domain["upper"], shape=1)
     for i in range(shape):
         db[i+1] = dist[i]
     return db
@@ -41,8 +40,8 @@ def map_int_to_discrete_dist(name, info, domain, shape):
         a,b = info[1:]
         dist = [lambda siz: sc.stats.randint(a, a+b).rvs(siz) for _ in range(shape)]
     elif ids == 0:
-        mu,std = info[1:]
-        dist = [lambda siz: sc.stats.poisson(mu=mu).rvs(siz) for _ in range(shape)]
+        mu,loc = info[1:]
+        dist = [lambda siz: sc.stats.poisson(mu=mu,loc=loc).rvs(siz) for _ in range(shape)]
 
     if shape == 1:
         return dist

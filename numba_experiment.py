@@ -1,14 +1,21 @@
-from numba import jit
-from scipy.stats import norm
-import numpy as np
+import time
+from joblib import Parallel, delayed
 
-@jit(nopython=True)
-def normal_mean(nsamples):
-    x = np.random.normal(0,10, size=nsamples)
-    return np.mean(x)
+def countdown(n):
+    while n>0:
+        n -= 1
+    return n
 
-def normal_mean_without(nsamples):
-    x = np.random.normal(0,10, size=nsamples)
-    return np.mean(x)
 
-print(normal_mean(10_000_000))
+t = time.time()
+for _ in range(20):
+    print(countdown(10**7), end=" ")
+print(time.time() - t)  
+# takes ~10.5 seconds on medium sized Macbook Pro
+
+
+t = time.time()
+results = Parallel(n_jobs=4)(delayed(countdown)(10**7) for _ in range(20))
+print(results)
+print(time.time() - t)
+# takes ~6.3 seconds on medium sized Macbook Pro
