@@ -62,6 +62,7 @@ def construct_analysis(f, domain, q, random_state=None, cores=1):
         cur_dist, constraint = domain_to_dist_ids(domain, dist)
         feasible_region = GPyOpt.Design_space(space = cur_dist, constraints = constraint) 
         initial_design = GPyOpt.experiment_design.initial_design('random', feasible_region, 10)
+
         f = lambda x: method(x,dist)
         # fs.append(f)
         #CHOOSE the objective
@@ -82,45 +83,44 @@ def construct_analysis(f, domain, q, random_state=None, cores=1):
 
         bo.run_optimization(max_iter = parameters.MAX_ITER, eps = parameters.EPS, verbosity=False) 
 
-        return bo.X, bo.Y
+        
+
+        return bo.X, bo.Y, dist
     res = Parallel(n_jobs=cores)(delayed(run_analysis)(dist) for dist in tqdm(combs))
-    # for dist in tqdm(combs):
-    #     cur_dist, constraint = domain_to_dist_ids(domain, dist)
-    #     feasible_region = GPyOpt.Design_space(space = cur_dist, constraints = constraint) 
-    #     initial_design = GPyOpt.experiment_design.initial_design('random', feasible_region, 10)
-    #     f = lambda x: method(x,dist)
-    #     fs.append(f)
-    #     #CHOOSE the objective
-    #     objective = GPyOpt.core.task.SingleObjective(f)
 
-    #     # CHOOSE the model type
-    #     model = GPyOpt.models.GPModel(exact_feval=True,optimize_restarts=10,verbose=False)
-
-    #     #CHOOSE the acquisition optimizer
-    #     aquisition_optimizer = GPyOpt.optimization.AcquisitionOptimizer(feasible_region)
-
-    #     #CHOOSE the type of acquisition
-    #     acquisition = GPyOpt.acquisitions.AcquisitionEI(model, feasible_region, optimizer=aquisition_optimizer)
-
-    #     #CHOOSE a collection method
-    #     evaluator = GPyOpt.core.evaluators.Sequential(acquisition)
-    #     bo = GPyOpt.methods.ModularBayesianOptimization(model, feasible_region, objective, acquisition, evaluator, initial_design)
-
-    #     bo.run_optimization(max_iter = parameters.MAX_ITER, eps = parameters.EPS, verbosity=False) 
-
-    #     X.append(bo.X)
-    #     Y.append(bo.Y)
-    X = [r[0] for r in res]
-    Y = [r[1] for r in res]
-    return X,Y
+    return wrapper(res, [d["type"] for d in domain])
 
 
 
 class wrapper:
-    def __init__(self, X,Y, domain):
-        self.X = X
-        self.Y = Y
-        self.domain = domain
+    def __init__(self, res, types):
+        self.X = [r[0] for r in res]
+        self.Y = [r[1] for r in res]
+        self.dist = [r[2] for r in res]
+        self.types = types
+
+    def print_dist(self, val, di, t):
+        print(val)
+        if t == "float":
+            if di == 0:
+                print(f"Normal(mu={val[0]}, sigma={val[1]})")
+            elif di == 1:
+                print(f"Uniform(lower={val[0]}, scale={val[1]})")
+        else:
+            if di == 0:
+                print(f"Poisson(mu={val[0]}, scale={val[1]})")
+            elif di == 1:
+                print(f"Discrete Uniform(lower={val[0]}, scale={val[1]})")
+
+    def best_dist(self):
+        for i in range(len(self.X)):
+            best_id = np.argmin(self.Y[i])
+            best_y = self.Y[i][best_id]
+            best_x = self.X[i][best_id]
+            dists = self.dist[i]
+            for di, t in zip(dists, self.types):
+                self.print_dist(best_x, di, t)
+
     
     def plot_best_dist(self):
         fig, ax = plt.subplots(len(self.domain),2)

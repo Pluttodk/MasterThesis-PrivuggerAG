@@ -32,12 +32,14 @@ def q(trace):
 
 #Maximum is = 4.605
 
-X, Y = attacker.construct_analysis(wrapper, 
+wrap = attacker.construct_analysis(wrapper, 
                             domain, 
                             diff,
-                            random_state=1)
-for i in range(len(X)):
-    print("="*9+str(i)+"="*9)
-    print(f"Maximum y reached after 100-iterations: {Y[i][np.argmin(Y[i])]}")
-    print(f"Maximum x reached after 100-iterations: {X[i][np.argmin(Y[i])]}")
-    print("="*19)
+                            random_state=1,
+                            cores=2)
+wrap.best_dist()
+# for i in range(len(X)):
+#     print("="*9+str(i)+"="*9)
+#     print(f"Maximum y reached after 100-iterations: {Y[i][np.argmin(Y[i])]}")
+#     print(f"Maximum x reached after 100-iterations: {X[i][np.argmin(Y[i])]}")
+#     print("="*19)
