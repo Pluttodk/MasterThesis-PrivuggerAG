@@ -6,7 +6,7 @@ from typing import List
 from scipy import stats as st
 from numba import njit
 
-def wrapper(a: List[float], b: List[float]) -> float:
+def wrapper(a: float, b: float) -> float:
     res = np.mean(a[b > 180])
     if np.isnan(res):
         return 0
@@ -39,7 +39,7 @@ X, Y = attacker.construct_analysis(wrapper,
                             domain, 
                             q,
                             random_state=1,
-                            cores=2)
+                            cores=1)
 for i in range(len(X)):
     print("="*9+str(i)+"="*9)
     print(f"Maximum y reached after 100-iterations: {Y[i][np.argmin(Y[i])]}")

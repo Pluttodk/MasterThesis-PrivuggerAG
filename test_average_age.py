@@ -6,17 +6,19 @@ from typing import List
 from scipy import stats as st
 from numba import njit
 
-@njit
-def wrapper(a: List[int]) -> float:
+def wrapper(a: List[float]) -> float:
     return np.mean(a)
 ## opendp program
+
+def mode(a: List[float]) -> float:
+    return np.median(a)
 
 domain = [
     {
         "name": "age",
         "lower": 10,
-        "upper": 100,
-        "type": "int"
+        "upper": 50,
+        "type": "float",
     }
 ]
 
@@ -32,12 +34,12 @@ def q(trace):
 
 #Maximum is = 4.605
 
-wrap = attacker.construct_analysis(wrapper, 
+wrap = attacker.construct_analysis(mode, 
                             domain, 
-                            diff,
-                            random_state=1,
-                            cores=2)
+                            q,
+                            cores=1)
 wrap.best_dist()
+print(np.min(wrap.Y, axis=1))
 # for i in range(len(X)):
 #     print("="*9+str(i)+"="*9)
 #     print(f"Maximum y reached after 100-iterations: {Y[i][np.argmin(Y[i])]}")

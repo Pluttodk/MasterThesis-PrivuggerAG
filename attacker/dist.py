@@ -79,27 +79,19 @@ def poisson_domain(domain, pos):
         },
     ]
 
-class Distributions:
-    libraries = {"pymc3", "scipy"}
-    dist = []
-
-    def __init__(self, library="scipy"):
-        if library not in self.libraries:
-            raise Exception("The tool currently only supports scipy and pymc3 distribution")
-        self.library = library
-    
-    def normal(self, mu, std, name=""):
-        if self.library == "scipy":
-            n = lambda siz: st.stats.norm(mu, std).rvs(siz)
-            self.dist.append(n)
-        elif self.library == "pymc3":
-            n = lambda s: pm.Normal(name, mu, std)
-            self.dist.append(n)
-    
-    def infer(self, sample):
-        if self.library == "pymc3":
-            with pm.Model() as model:
-                x = [ni(sample) for ni in n]
-        elif self.library == "scipy":
-            x = [ni(sample) for ni in self.dist]
-            return x
+def half_normal_domain(domain, pos):
+    upper_bound_std = (1/12)*(domain["upper"] - domain["lower"])**2
+    upper = domain["upper"]
+    return [{
+        "name": domain["name"]+"_mu",
+        "type": "continuous",
+        "domain": (domain["lower"], domain["upper"]),
+    },{
+        "name": domain["name"]+"_std",
+        "type": "continuous",
+        "domain": (0.1, upper_bound_std)
+    }], [{
+            'name': domain["name"]+"_constr1", 
+            'constraint': f'2*x[:,{pos+1}]+x[:,{pos}]-{upper}' # Variance >= 0.1
+        },
+    ]

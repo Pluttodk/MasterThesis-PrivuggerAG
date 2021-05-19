@@ -51,9 +51,8 @@ def parse(f,rng=None):
             methods.append(temp)
     return methods
 
-@njit
 def make_output(f, dist):
-    db = np.zeros(len(dist))
+    db = np.zeros(len(dist), )
     for i,d in enumerate(dist):
         db[i] = f(d)
     return db
@@ -71,20 +70,21 @@ def create_analytical_method(f, q, domain, random_state=None):
         methods = parse(f,random_state)
     else:
         methods = parse(f)
-    if len(list(f.__annotations__.values())) == 2:
+    if len(list(f.__annotations__.values())) == 2 and len(domain) == 1:
         if isinstance(methods[0], list):
             #Method with one List as input
             def inner(x, i, return_trace=False):
                 x = np.append(np.asarray([[i]]), x).reshape((1,-1))
                 dist = eval_methods(methods[0], x, domain)
                 dist_reshape = unwrap_fast(dist)
-
                 out = make_output(f, dist_reshape)
                 trace = {
                     f"Alice_{domain[0]['name']}": dist[0],
                     f"Rest_{domain[0]['name']}": dist[1:],
                     "out": out
                 }
+                if return_trace:
+                    return q(trace),trace
                 return q(trace)
             return inner
         else:
@@ -102,6 +102,8 @@ def create_analytical_method(f, q, domain, random_state=None):
                     f"{domain[0]['name']}": dist,
                     "out": out
                 }
+                if return_trace:
+                    return q(trace), trace
                 return q(trace)
             return inner
     else:
@@ -114,19 +116,36 @@ def create_analytical_method(f, q, domain, random_state=None):
                 else:
                     pos = j-((j//3)+1)
                     x_new[j] = x[0][pos]
-            
             res = eval_methods(methods, x_new.reshape((1,-1)), domain)
 
             data = np.empty(tuple([len(res)] + list(res[0].shape)[::-1]))
-            for j in range(2):
-                data[j] = list(zip(*res[j]))
+            r = res
+            if len(list(f.__annotations__.values())) == 2:
+                while len(r) == 1:
+                    r = r[0]
+                for j in range(len(r)):
+                    r[j] = r[j].flatten()
+                data = np.array(list(zip(*r)))
+            #print(list(zip(*r)))
+            else:
+                for j in range(len(r)):
+                    data[j] = list(zip(*res[j]))
             out = np.zeros(parameters.SAMPLES)
             for j in range(len(out)):
-                out[j] = f(*data[:,j])
+                if len(list(f.__annotations__.values())) == 2:
+                    out[j] = f(data[j])
+                else:
+                    out[j] = f(*data[:,j])
             trace = {"out": out}
             for j,d in enumerate(domain):
-                trace["Alice_" + d["name"]] = res[j][0]
-                trace["Rest_" + d["name"]] = res[j][1:]
+                #Tuple
+                if len(r[j]) == parameters.SAMPLES:
+                    trace["Alice_" + d["name"]] = r[j]
+                else:
+                    trace["Alice_" + d["name"]] = r[j][0]
+                    trace["Rest_" + d["name"]] = r[j][1:]
+            if return_trace:
+                return q(trace), trace
             return q(trace)
         return inner
 
@@ -136,7 +155,7 @@ def eval_methods(method, x, domain, i=0):
         if isinstance(m, list):
             res[j] = eval_methods(m, x, domain, i)
         else:
-            c = np.asarray([di(parameters.SAMPLES) for di in (m(x[0][i:i+3], domain))])
+            c = np.asarray([di(parameters.SAMPLES) for di in m(x[0][i:i+3], domain)])
             i+=3
             if len(method) == 1:
                 return c

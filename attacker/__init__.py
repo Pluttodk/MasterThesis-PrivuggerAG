@@ -43,6 +43,9 @@ def domain_to_dist_ids(d, ids):
         elif i == 1:
             dom, cons = uniform_domain(domain, pos)
             pos += 2
+        elif i == 2:
+            dom, cons = half_normal_domain(domain, pos)
+            pos += 2
 
         for di in dom:
             resulting_domain.append(di)
@@ -85,7 +88,7 @@ def construct_analysis(f, domain, q, random_state=None, cores=1):
 
         
 
-        return bo.X, bo.Y, dist
+        return bo.X, bo.Y, dist, bo, method
     res = Parallel(n_jobs=cores)(delayed(run_analysis)(dist) for dist in tqdm(combs))
 
     return wrapper(res, [d["type"] for d in domain])
@@ -97,6 +100,8 @@ class wrapper:
         self.X = [r[0] for r in res]
         self.Y = [r[1] for r in res]
         self.dist = [r[2] for r in res]
+        self.bos = [r[3] for r in res]
+        self.functions = [r[4] for r in res]
         self.types = types
 
     def print_dist(self, val, di, t):
@@ -106,6 +111,8 @@ class wrapper:
                 print(f"Normal(mu={val[0]}, sigma={val[1]})")
             elif di == 1:
                 print(f"Uniform(lower={val[0]}, scale={val[1]})")
+            elif di == 2:
+                print(f"HalfNormal(mu={val[0]}, scale={val[1]})")
         else:
             if di == 0:
                 print(f"Poisson(mu={val[0]}, scale={val[1]})")
