@@ -3,6 +3,12 @@ import pymc3 as pm
 
 
 def normal_domain(domain):
+    """
+    The domain for the normal distribution
+    
+    :param domain: A domain specifying upper and lower range for a value
+    :returns: A dictionary of mu and standard deviation in accordace to normal distribution and and empty set of constraints
+    """
     upper_bound_std = (1/12)*(domain["upper"] - domain["lower"])**2
     return [
         {
@@ -21,11 +27,16 @@ def normal_domain(domain):
 def uniform_domain(domain, pos):
     """
     We add constraints such that the value will scale correctly. 
-    One being the following
-    1/12*(x)^2 >= 0.1
-    Where X is the scale.
 
-    so we get that scale has to be >= sqrt(6/5)
+    One being the following
+    1/12*(x_2)^2 >= 0.1
+    and 
+    x_2 > x_2
+    Where x_2 is the scale. and x_1 is the lower
+
+    :param domain: A domain specifying upper and lower range for a value
+    :param pos: Indicator for the x value of the vector
+    :returns: A dictionary of lower and upper of a uniform dist and a set of constraints as above
     """
     upper = domain["upper"]
     return [
@@ -52,12 +63,14 @@ def uniform_domain(domain, pos):
 
 def poisson_domain(domain, pos):
     """
-    We add constraints such that the value will scale correctly. 
-    One being the following
-    1/12*(x)^2 >= 0.1
-    Where X is the scale.
+    The domain and constraints for the parameters of a Poisson Distribution
 
-    so we get that scale has to be >= sqrt(6/5)
+    Constraints
+    lambda+scale < domain Upper
+
+    :param domain: A domain specifying upper and lower range for a value
+    :param pos: An indicator to the vector of values
+    :returns: A dictionary of lower and upper of a poisson dist and a set of constraints as above
     """
     upper_bound_std = domain["lower"]+(1/12)*(domain["upper"] - domain["lower"])**2
     upper = domain["upper"]
@@ -80,6 +93,16 @@ def poisson_domain(domain, pos):
     ]
 
 def half_normal_domain(domain, pos):
+    """
+    The domain and constraints for the parameters of a Half Normal Distribution
+
+    Constraints
+    2*sigma + scale < upper (confidence interval)
+
+    :param domain: A domain specifying upper and lower range for a value
+    :param pos: An indicator to the vector of values
+    :returns: A dictionary of lower and upper of a half normal dist and a set of constraints as above
+    """
     upper_bound_std = (1/12)*(domain["upper"] - domain["lower"])**2
     upper = domain["upper"]
     return [{

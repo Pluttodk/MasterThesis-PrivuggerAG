@@ -15,6 +15,13 @@ from joblib import Parallel, delayed
 
 
 def fix_domain(domain):
+    """
+    Ensures that the domain given is correct domain
+
+    :param domain: A dictionary specified by the user
+    :returns: The domain fixed
+    :raises TypeError: If a wrong key was used for a value
+    """
     LEGAL_VALS = {
         "name" : lambda x: isinstance(x, str),
         "lower": lambda x: isinstance(x, int) or isinstance(x, float),
@@ -29,6 +36,12 @@ def fix_domain(domain):
     return domain
 
 def domain_to_dist_ids(d, ids):
+    """
+    Parameterize an id to a distribution (similar to that in Table 4 in thesis)
+
+    :param d: the domain to be converted to a distribution
+    :param ids: A location of what parameter to convert
+    """
     res = [fix_domain(domain) for domain in d]
     resulting_domain = []
     constraints = []
@@ -53,7 +66,19 @@ def domain_to_dist_ids(d, ids):
             constraints.append(c)
     return resulting_domain, constraints
 
-def construct_analysis(f, domain, q, random_state=None, cores=1):
+def construct_analysis(q, domain, f, random_state=None, cores=1):
+    """
+    Analyse a program for any leakage attacks
+
+    :param q: The PPM 
+    :param domain: A dictionary specifying parameters range
+    :param f: The leakage measurement
+    :param random_state: Default none, but can be used to fix a random seed
+    :param cores: how many cores to run the analysis on
+    :returns: A Wrapper class specifying leakage found
+    """
+
+    f,q = q,f
     method = parse.create_analytical_method(f, q, domain, random_state)
 
     comb = np.array([np.arange(parameters.CONT_DIST) if d["type"] == "float" else np.arange(parameters.DISC_DIST) for d in domain])
@@ -96,6 +121,9 @@ def construct_analysis(f, domain, q, random_state=None, cores=1):
 
 
 class wrapper:
+    """
+    A class to hold all information about the leakage found
+    """
     def __init__(self, res, types):
         self.X = [r[0] for r in res]
         self.Y = [r[1] for r in res]
@@ -104,7 +132,13 @@ class wrapper:
         self.functions = [r[4] for r in res]
         self.types = types
 
+    def __str__(self):
+        return best_dist()
+
     def print_dist(self, val, di, t):
+        """
+        A method for showing the best distribution found
+        """
         print(val)
         if t == "float":
             if di == 0:
@@ -112,14 +146,17 @@ class wrapper:
             elif di == 1:
                 print(f"Uniform(lower={val[0]}, scale={val[1]})")
             elif di == 2:
-                print(f"HalfNormal(mu={val[0]}, scale={val[1]})")
+                print(f"HalfNormal(mu={val[0]}, sigma={val[1]})")
         else:
             if di == 0:
-                print(f"Poisson(mu={val[0]}, scale={val[1]})")
+                print(f"Poisson(lambda={val[0]}, loc={val[1]})")
             elif di == 1:
                 print(f"Discrete Uniform(lower={val[0]}, scale={val[1]})")
 
     def best_dist(self):
+        """
+        Prints the best distribution based on the Y found
+        """
         for i in range(len(self.X)):
             best_id = np.argmin(self.Y[i])
             best_y = self.Y[i][best_id]
@@ -128,30 +165,17 @@ class wrapper:
             for di, t in zip(dists, self.types):
                 self.print_dist(best_x, di, t)
 
-    
-    def plot_best_dist(self):
-        fig, ax = plt.subplots(len(self.domain),2)
-        for a, d in zip(ax, domain):
-            if d["type"] == "int":
-                x = np.arange(d["lower"], d["upper"])
-                # mu,scale = 
-                # a[0].plot(poisson)
-                #a[1].plot(Uniform)
-
-    def plot_convergence(self, plot=True):
-        self.Bopt.plot_convergence()
-        if not plot:
-            import datetime
-            plt.savefig("img/"+ datetime.date.today().__str__() + "-convergence-privugger.png")
-    
-    def plot_acquisition(self, plot=True):
-        self.Bopt.plot_acquisition()
-        if not plot:
-            import datetime
-            plt.savefig("img/"+ datetime.date.today().__str__() + "-acquisition-privugger.png")
-
     def maximum(self):
-        return self.Bopt.fx_opt, self.Bopt.x_opt
+        """ 
+        Find the best value acchieved
+        """
+        best = [min(yi) for yi in self.Y]
+        return best
     
-    def run(self, return_trace=False):
-        return self.f(np.asarray([self.Bopt.x_opt]), return_trace)
+    def run(self, i, return_trace=False):
+        """
+        Executes the program again with the best values
+
+        :param i: An indicator of which dist to use
+        """
+        return self.functions[i]([self.X[i][np.argmin(self.Y[i])]],i, return_trace=return_trace)

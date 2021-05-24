@@ -5,6 +5,15 @@ from attacker import parameters, optimizer as opt
 from numba import njit
 
 def convert_primitive_to_dist(p, i, is_list, rng=None):
+    """
+    Converts a primitive data-type to a distribution.
+
+    :param p: The parameter of the underlying PPM
+    :param i: id into the domain og constraints
+    :param is_list: specifies if the distribution should be generated as a list or single distribution
+    :param rng: A RandomState to fix the program, e.g. np.random.RandomState(12345)
+    :returns: A method that when called returns a scipy distribution (that has not been sampled on yet) e.g. f(x) = scipy.stats.norm(x)
+    """
     if p == float:
         def float_convert(x, domain):
             size = parameters.DB_SIZE if is_list else 1
@@ -17,6 +26,14 @@ def convert_primitive_to_dist(p, i, is_list, rng=None):
         return int_convert
 
 def convert_non_primitive_to_dist(p,i, rng=None):
+    """
+    Converts a non-primitive data-type to a distribution.
+
+    :param p: The parameter of the underlying PPM
+    :param i: id into the domain of constraints
+    :param rng: A RandomState to fix the program, e.g. np.random.RandomState(12345)
+    :returns: all parameters unwrapped into methods of distributions that when called returns the samples distributions
+    """
     inner = p.__args__
     partial = []
     for pi in inner:
@@ -31,13 +48,11 @@ def convert_non_primitive_to_dist(p,i, rng=None):
 
 def parse(f,rng=None):
     """
-    For each parameter - p:
-        For each type of p:
-            if p is continuous:
-                Create lambda method for map_int_to_cont
-            else:
-                create lambda method for map_int_to_disc
-            append to a broader perspective
+    Parses the ppm and converts it to a list of distributions that
+
+    :param f: The Privacy Preserving Mechanism (PPM)
+    :param rng: A RandomState to fix the program, e.g. np.random.RandomState(12345)
+    :returns: A list of methods that when call returns a distribution in accordance to the PPM
     """
     methods = []
     parameters = list(f.__annotations__.values())
@@ -52,6 +67,13 @@ def parse(f,rng=None):
     return methods
 
 def make_output(f, dist):
+    """
+    Calls a leakage measurement with distributions
+
+    :param f: A method representing leakage measurement
+    :param dist: A list of distributions
+    :returns: An estimate of the posterior after calling f
+    """
     db = np.zeros(len(dist), )
     for i,d in enumerate(dist):
         db[i] = f(d)
@@ -59,6 +81,12 @@ def make_output(f, dist):
 
 @njit
 def unwrap_fast(X):
+    """
+    A numba version that unwraps a method from [[A,A],[B,B]] to [[A,B],[A,B]]
+
+    :param X: The method to be unwrapped
+    :returns: list(zip(*X))
+    """
     db = np.empty((len(X[0]), len(X)))
     for i in range(len(X[0])):
         for j in range(len(X)):
@@ -66,6 +94,15 @@ def unwrap_fast(X):
     return db
 
 def create_analytical_method(f, q, domain, random_state=None):
+    """
+    Parses a PPM and converts it to a maximization method
+
+    :param f: A leakage measurement
+    :param q: A Privacy Preserving Mechanism (PPM)
+    :param domain: Domain specifying parameters range
+    :param random_state: A random state to fixate the underlying distribution (e.g. np.random.RandomState(12345))
+    :returns: A function with input X that has to be maximised. That is "argmax create_analytical_method" = Best leakage
+    """
     if isinstance(random_state, int):
         methods = parse(f,random_state)
     else:
@@ -74,6 +111,14 @@ def create_analytical_method(f, q, domain, random_state=None):
         if isinstance(methods[0], list):
             #Method with one List as input
             def inner(x, i, return_trace=False):
+                """
+                The inner method for a single parameter of type List[float] or List[int]
+
+                :param x: A vector specifying the parameters
+                :param i: Specifying which distribution to generate in accordance to the value it is given in dist.py
+                :param return_trace: Default false, but can be called after the optimizer to return the trace
+                :returns: The leakage using that particular distributions
+                """
                 x = np.append(np.asarray([[i]]), x).reshape((1,-1))
                 dist = eval_methods(methods[0], x, domain)
                 dist_reshape = unwrap_fast(dist)
@@ -90,6 +135,14 @@ def create_analytical_method(f, q, domain, random_state=None):
         else:
             #Method with one primitive data type
             def inner(x, i, return_trace=False):
+                """
+                The inner method for a single primitive data-type PPM (int or float)
+
+                :param x: A vector specifying the parameters
+                :param i: Specifying which distribution to generate in accordance to the value it is given in dist.py
+                :param return_trace: Default false, but can be called after the optimizer to return the trace
+                :returns: The leakage using that particular distributions
+                """
                 x = np.append(np.asarray([[i]]), x).reshape((1,-1))
                 items = methods[0](x[0], domain)
                 items = items[0]
@@ -109,6 +162,16 @@ def create_analytical_method(f, q, domain, random_state=None):
     else:
         # We will have to do a larger test, such that every parameter becomes a 
         def inner(x, i, return_trace=False):
+            """
+            The inner method for a multiple parameters
+
+            :param x: A vector specifying the parameters
+            :param i: Specifying which distribution to generate in accordance to the value it is given in dist.py
+            :param return_trace: Default false, but can be called after the optimizer to return the trace
+            :returns: The leakage using that particular distributions
+            """
+
+            # Insert i into array i.e. [24,12,14,13] becomes [0,24,12,0,14,13]
             x_new = np.zeros(len(x[0])+len(x[0])//2)
             for j in range(len(x_new)):
                 if not j % 3:
@@ -116,17 +179,19 @@ def create_analytical_method(f, q, domain, random_state=None):
                 else:
                     pos = j-((j//3)+1)
                     x_new[j] = x[0][pos]
+
+            # Convert method dist
             res = eval_methods(methods, x_new.reshape((1,-1)), domain)
 
             data = np.empty(tuple([len(res)] + list(res[0].shape)[::-1]))
             r = res
+            
             if len(list(f.__annotations__.values())) == 2:
                 while len(r) == 1:
                     r = r[0]
                 for j in range(len(r)):
                     r[j] = r[j].flatten()
                 data = np.array(list(zip(*r)))
-            #print(list(zip(*r)))
             else:
                 for j in range(len(r)):
                     data[j] = list(zip(*res[j]))
@@ -150,6 +215,16 @@ def create_analytical_method(f, q, domain, random_state=None):
         return inner
 
 def eval_methods(method, x, domain, i=0):
+    """
+    Calls a list of method with the parameters specifying the underlying methods
+        - In terms of the report, this method takes I and P as input and calls each I_i with P_i
+
+    :param method: a list of functions that returns distributions (I, in terms of thesis)
+    :param x: The parameters for the underlying distribution (P, in terms of thesis)
+    :param domain: The domain specifying constraints of the underlying distribution (can be seen in dist.py)
+    :param i: An id specifying the what part of x to be used
+    :returns: A list of scipy distributions
+    """
     res = np.empty(len(method), dtype=object)
     for j, m in enumerate(method):
         if isinstance(m, list):

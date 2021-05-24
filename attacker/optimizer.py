@@ -4,6 +4,16 @@ import pymc3 as pm
 import scipy as sc
 
 def map_int_to_cont_dist(name, info, domain, shape,rng=None):
+    """
+    Maps an integer to a method which returns discrete distribution
+
+    :param name: specifies the name of the distribution (Optional, left in to support extension to pymc3)
+    :param info: An array specifing the information for the distribution where info[0] acts as an indicator for values
+    :param domain: The domain constraints for the underlying distributions (and to manually set the secret)
+    :param shape: How many of the same distribution to generate (# of n in thesis)
+    :param rng: A randomstate seed to fix the random generator (can in some scenarios help the optimizer)
+    :returns: A method of that when called return a distribution samples n times
+    """
     dist = None
     ids = info[0]
     
@@ -34,7 +44,17 @@ def map_int_to_cont_dist(name, info, domain, shape,rng=None):
         db[i+1] = dist[i]
     return db
 
-def map_int_to_discrete_dist(name, info, domain, shape):
+def map_int_to_discrete_dist(name, info, domain, shape, rng=None):
+    """
+    Maps an integer to a method which returns continuous distribution
+
+    :param name: specifies the name of the distribution (Optional, left in to support extension to pymc3)
+    :param info: An array specifing the information for the distribution where info[0] acts as an indicator for values
+    :param domain: The domain constraints for the underlying distributions (and to manually set the secret)
+    :param shape: How many of the same distribution to generate (# of n in thesis)
+    :param rng: A randomstate seed to fix the random generator (can in some scenarios help the optimizer)
+    :returns: A method of that when called return a distribution samples n times
+    """
     ids = info[0]
     dist = None
     if ids == 1:
@@ -51,12 +71,4 @@ def map_int_to_discrete_dist(name, info, domain, shape):
     for i in range(shape):
         db[i+1] = dist[i]
     return db
-
-def visualise_model(model, x):
-    plt.rcParams["figure.figsize"] = (20,8)
-    for rv in model.free_RVs:
-        plt.plot(x, np.exp(rv.distribution.logp_nojac(x).eval()), label=rv.__str__())
-    plt.legend(loc=2)
-    plt.tight_layout()
-    plt.show()
 
