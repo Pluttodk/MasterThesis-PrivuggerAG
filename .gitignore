@@ -133,3 +133,9 @@ Performance/
 *.DS_STORE
 
 *.pyc 
+
+*.csv
+!Evaluations/*.csv
+
+*.png
+*.jpg

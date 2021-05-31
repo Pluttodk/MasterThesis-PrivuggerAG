@@ -1,6 +1,5 @@
 import scipy as st
-import pymc3 as pm
-
+import numpy as np
 
 def normal_domain(domain):
     """
@@ -9,7 +8,7 @@ def normal_domain(domain):
     :param domain: A domain specifying upper and lower range for a value
     :returns: A dictionary of mu and standard deviation in accordace to normal distribution and and empty set of constraints
     """
-    upper_bound_std = (1/12)*(domain["upper"] - domain["lower"])**2
+    upper_bound_std = np.sqrt((1/12)*(domain["upper"] - domain["lower"])**2)
     return [
         {
             "name": domain["name"]+"_mu",
@@ -72,7 +71,7 @@ def poisson_domain(domain, pos):
     :param pos: An indicator to the vector of values
     :returns: A dictionary of lower and upper of a poisson dist and a set of constraints as above
     """
-    upper_bound_std = domain["lower"]+(1/12)*(domain["upper"] - domain["lower"])**2
+    upper_bound_std = domain["lower"]+np.sqrt((1/12)*(domain["upper"] - domain["lower"])**2)
     upper = domain["upper"]
     return [
         {
@@ -103,7 +102,7 @@ def half_normal_domain(domain, pos):
     :param pos: An indicator to the vector of values
     :returns: A dictionary of lower and upper of a half normal dist and a set of constraints as above
     """
-    upper_bound_std = (1/12)*(domain["upper"] - domain["lower"])**2
+    upper_bound_std = np.sqrt((1/12)*(domain["upper"] - domain["lower"])**2)
     upper = domain["upper"]
     return [{
         "name": domain["name"]+"_mu",

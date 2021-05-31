@@ -1,7 +1,7 @@
 from typing import * 
 import pymc3 as pm
 import numpy as np
-from attacker import parameters, optimizer as opt
+from privuggerag import parameters, optimizer as opt
 from numba import njit
 
 def convert_primitive_to_dist(p, i, is_list, rng=None):

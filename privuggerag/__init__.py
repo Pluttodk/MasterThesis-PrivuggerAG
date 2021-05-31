@@ -4,11 +4,11 @@ import pandas as pd
 import GPyOpt
 from GPyOpt.methods import BayesianOptimization
 from typing import *
-from attacker import parameters, parse, optimizer as opt
+from privuggerag import parameters, parse, optimizer as opt
 import logging
 import time
 from tqdm import tqdm
-from attacker.dist import *
+from privuggerag.dist import *
 from cProfile import Profile
 from scipy import stats as st
 from joblib import Parallel, delayed
@@ -32,7 +32,7 @@ def fix_domain(domain):
     for k, v in LEGAL_VALS.items():
         if not v(domain[k]):
             #Fix the input
-            raise TypeError(f"Wrong variable for domain with key {k}, expected ..., recieved {domain[k]}")
+            raise TypeError(f"Wrong variable for domain with key {k}, recieved {domain[k]}")
     return domain
 
 def domain_to_dist_ids(d, ids):
@@ -133,37 +133,41 @@ class wrapper:
         self.types = types
 
     def __str__(self):
-        return best_dist()
+        return self.best_dist(False)
 
-    def print_dist(self, val, di, t):
+    def print_dist(self, val, di, t, leakage):
         """
         A method for showing the best distribution found
         """
-        print(val)
         if t == "float":
             if di == 0:
-                print(f"Normal(mu={val[0]}, sigma={val[1]})")
+                return(f"Normal(mu={val[0]}, sigma={val[1]}) - maximum of {leakage}")
             elif di == 1:
-                print(f"Uniform(lower={val[0]}, scale={val[1]})")
+                return(f"Uniform(lower={val[0]}, scale={val[1]}) - maximum of {leakage}")
             elif di == 2:
-                print(f"HalfNormal(mu={val[0]}, sigma={val[1]})")
+                return(f"HalfNormal(mu={val[0]}, sigma={val[1]}) - maximum of {leakage}")
         else:
             if di == 0:
-                print(f"Poisson(lambda={val[0]}, loc={val[1]})")
+                return(f"Poisson(lambda={val[0]}, loc={val[1]}) - maximum of {leakage}")
             elif di == 1:
-                print(f"Discrete Uniform(lower={val[0]}, scale={val[1]})")
+                return(f"Discrete Uniform(lower={val[0]}, scale={val[1]}) - maximum of {leakage}")
 
-    def best_dist(self):
+    def best_dist(self, should_print=True):
         """
         Prints the best distribution based on the Y found
         """
+        res = []
         for i in range(len(self.X)):
             best_id = np.argmin(self.Y[i])
             best_y = self.Y[i][best_id]
             best_x = self.X[i][best_id]
             dists = self.dist[i]
             for di, t in zip(dists, self.types):
-                self.print_dist(best_x, di, t)
+                res.append(self.print_dist(best_x, di, t, -best_y))
+        if should_print:
+            for v in res:
+                print(v)
+        return res
 
     def maximum(self):
         """ 

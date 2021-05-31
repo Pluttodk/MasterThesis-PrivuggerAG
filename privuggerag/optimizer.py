@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pymc3 as pm
 import scipy as sc
 
 def map_int_to_cont_dist(name, info, domain, shape,rng=None):
@@ -67,7 +66,10 @@ def map_int_to_discrete_dist(name, info, domain, shape, rng=None):
     if shape == 1:
         return dist
     db = np.empty(shape+1, dtype=object)
-    db[0] = lambda siz: sc.stats.randint(domain["lower"], domain["upper"]+1).rvs(siz)
+    if "alice" in domain and isinstance(domain["alice"], sc.stats._distn_infrastructure.rv_frozen):
+        db[0] = lambda siz: domain["alice"].rvs(siz, random_state=rng)
+    else:
+        db[0] = lambda siz: sc.stats.randint(domain["lower"], domain["upper"]+1).rvs(siz)
     for i in range(shape):
         db[i+1] = dist[i]
     return db
