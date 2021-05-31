@@ -1,5 +1,4 @@
 from typing import * 
-import pymc3 as pm
 import numpy as np
 from privuggerag import parameters, optimizer as opt
 from numba import njit

@@ -88,7 +88,7 @@ def construct_analysis(q, domain, f, random_state=None, cores=1):
     :returns: A Wrapper class specifying leakage found
     """
     pars = list(q.__annotations__.values())
-    if len(pars) == 2 and len(domain) == 1 and "alice" not in domain:
+    if len(pars) == 2 and len(domain) == 1 and "alice" not in domain[0]:
         if pars[0] != int and pars != float:
             domain.append({
                 "name": domain[0]["name"] + "_2",
