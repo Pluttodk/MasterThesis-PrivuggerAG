@@ -1,15 +1,10 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import GPyOpt
 from GPyOpt.methods import BayesianOptimization
 from typing import *
 from privuggerag import parameters, parse, optimizer as opt
-import logging
-import time
 from tqdm import tqdm
 from privuggerag.dist import *
-from cProfile import Profile
 from scipy import stats as st
 from joblib import Parallel, delayed
 
@@ -66,6 +61,21 @@ def domain_to_dist_ids(d, ids):
             constraints.append(c)
     return resulting_domain, constraints
 
+def work_on_random_alice(q):
+    """
+    A way to look for a random secret in List[...] without altering the program
+
+    :param q: The ppm
+    :returns: An altered q from q(a List[int]) to q(a: int, b: List[int])
+    """
+    if list(q.__annotations__.values())[0].__args__[0] == int:
+        def inner(a: int, b: List[int]) -> int:
+            return q([a[0]]+b[1:])
+    else:
+        def inner(a: float, b: List[float]) -> float:
+            return q([a[0]]+b[1:])
+    return inner
+
 def construct_analysis(q, domain, f, random_state=None, cores=1):
     """
     Analyse a program for any leakage attacks
@@ -77,7 +87,16 @@ def construct_analysis(q, domain, f, random_state=None, cores=1):
     :param cores: how many cores to run the analysis on
     :returns: A Wrapper class specifying leakage found
     """
-
+    pars = list(q.__annotations__.values())
+    if len(pars) == 2 and len(domain) == 1 and "alice" not in domain:
+        if pars[0] != int and pars != float:
+            domain.append({
+                "name": domain[0]["name"] + "_2",
+                "lower": domain[0]["lower"],
+                "upper": domain[0]["upper"],
+                "type": domain[0]["type"],
+                })
+            q = work_on_random_alice(q)
     f,q = q,f
     method = parse.create_analytical_method(f, q, domain, random_state)
 
@@ -103,7 +122,14 @@ def construct_analysis(q, domain, f, random_state=None, cores=1):
         aquisition_optimizer = GPyOpt.optimization.AcquisitionOptimizer(feasible_region)
 
         #CHOOSE the type of acquisition
-        acquisition = GPyOpt.acquisitions.AcquisitionEI(model, feasible_region, optimizer=aquisition_optimizer)
+        if parameters.ACQUISITION == "LCB":
+            acquisition = GPyOpt.acquisitions.AcquisitionLCB(model, feasible_region, optimizer=aquisition_optimizer)
+        elif parameters.ACQUISITION == "PI":
+            acquisition = GPyOpt.acquisitions.AcquisitionMPI(model, feasible_region, optimizer=aquisition_optimizer)
+        elif parameters.ACQUISITION == "EI":
+            acquisition = GPyOpt.acquisitions.AcquisitionEI(model, feasible_region, optimizer=aquisition_optimizer)
+        else:
+            raise TypeError("The parameters for acquisition has to be either EI, PI or LCB")
 
         #CHOOSE a collection method
         evaluator = GPyOpt.core.evaluators.Sequential(acquisition)
@@ -141,16 +167,16 @@ class wrapper:
         """
         if t == "float":
             if di == 0:
-                return(f"Normal(mu={val[0]}, sigma={val[1]}) - maximum of {leakage}")
+                return(f"Normal(mu={val[0]}, sigma={val[1]})")
             elif di == 1:
-                return(f"Uniform(lower={val[0]}, scale={val[1]}) - maximum of {leakage}")
+                return(f"Uniform(lower={val[0]}, scale={val[1]})")
             elif di == 2:
-                return(f"HalfNormal(mu={val[0]}, sigma={val[1]}) - maximum of {leakage}")
+                return(f"HalfNormal(mu={val[0]}, sigma={val[1]})")
         else:
             if di == 0:
-                return(f"Poisson(lambda={val[0]}, loc={val[1]}) - maximum of {leakage}")
+                return(f"Poisson(lambda={val[0]}, loc={val[1]})")
             elif di == 1:
-                return(f"Discrete Uniform(lower={val[0]}, scale={val[1]}) - maximum of {leakage}")
+                return(f"Discrete Uniform(lower={val[0]}, scale={val[1]}) ")
 
     def best_dist(self, should_print=True):
         """
@@ -162,8 +188,11 @@ class wrapper:
             best_y = self.Y[i][best_id]
             best_x = self.X[i][best_id]
             dists = self.dist[i]
+            s = ""
             for di, t in zip(dists, self.types):
-                res.append(self.print_dist(best_x, di, t, -best_y))
+                s += self.print_dist(best_x, di, t, -best_y)
+            s += f" - maximum of {-best_y}"
+            res.append(s)
         if should_print:
             for v in res:
                 print(v)

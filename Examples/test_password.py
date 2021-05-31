@@ -1,11 +1,15 @@
+import os
+import sys
+import inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
 import privuggerag as attacker
 import numpy as np
-import opendp.smartnoise.core as sn
 from sklearn.feature_selection import mutual_info_regression
 from typing import List
-from scipy import stats as st
-from numba import njit
-from matplotlib import pyplot as plt
 
 def wrapper(a: int) -> int:
     return a == 1024

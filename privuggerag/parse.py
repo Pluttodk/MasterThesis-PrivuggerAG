@@ -166,24 +166,30 @@ def create_analytical_method(f, q, domain, random_state=None):
             The inner method for a multiple parameters
 
             :param x: A vector specifying the parameters
-            :param i: Specifying which distribution to generate in accordance to the value it is given in dist.py
+            :param i: An array specifying which distribution to generate in accordance to the value it is given in dist.py
             :param return_trace: Default false, but can be called after the optimizer to return the trace
             :returns: The leakage using that particular distributions
             """
 
             # Insert i into array i.e. [24,12,14,13] becomes [0,24,12,0,14,13]
             x_new = np.zeros(len(x[0])+len(x[0])//2)
+            pos = 0
             for j in range(len(x_new)):
                 if not j % 3:
-                    x_new[i] = i
+                    x_new[j] = i[pos]
+                    pos += 1
                 else:
                     pos = j-((j//3)+1)
                     x_new[j] = x[0][pos]
-
             # Convert method dist
-            res = eval_methods(methods, x_new.reshape((1,-1)), domain)
 
-            data = np.empty(tuple([len(res)] + list(res[0].shape)[::-1]))
+            
+            res = eval_methods(methods, x_new.reshape((1,-1)), domain)
+            siz = 1
+            for j in range(len(res)):
+                if list(res[j].shape)[0] > 1:
+                    siz = parameters.DB_SIZE+1
+            data = np.empty(tuple([len(res), parameters.SAMPLES, siz]))
             r = res
             
             if len(list(f.__annotations__.values())) == 2:

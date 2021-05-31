@@ -9,6 +9,7 @@ sys.path.insert(0, parentdir)
 import privuggerag as attacker
 from sklearn.feature_selection import mutual_info_regression
 from typing import List
+import scipy.stats as st
 
 def q(a: List[float]) -> float:
     return sum(a)/len(a)
@@ -19,6 +20,7 @@ domain = [
         "lower": 10,
         "upper": 50,
         "type": "float",
+        "alice": st.norm(25,10)
     }
 ]
 def lm(trace):
